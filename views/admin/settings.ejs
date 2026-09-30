@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sayt Sazlamaları — Admin Panel</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-sidebar">
+      <h2>⚙️ Admin</h2>
+      <a href="/admin">📊 Dashboard</a>
+      <a href="/admin/posts">📝 Yazılar</a>
+      <a href="/admin/books">📚 Kitablar</a>
+      <a href="/admin/comments">💬 Şərhlər</a>
+      <a href="/admin/settings" class="active">⚙️ Sayt Sazlamaları</a>
+      <a href="/" target="_blank">🌐 Sayta bax</a>
+      <a href="/admin/logout">🚪 Çıxış</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1>⚙️ Sayt Sazlamaları</h1>
+
+      <% if (saved) { %>
+        <p class="ok">✅ Dəyişikliklər yadda saxlanıldı!</p>
+      <% } %>
+
+      <form method="POST" enctype="multipart/form-data" class="post-form">
+
+        <!-- ============ HERO BÖLMƏSİ ============ -->
+        <h3 class="form-section-title">🏠 Hero Bölməsi (Ana Səhifə)</h3>
+
+        <div class="form-group">
+          <label>Saytın adı</label>
+          <input type="text" name="site_name" value="<%= settings.site_name || '' %>">
+          <small style="color:#999;">Header-də görünür</small>
+        </div>
+
+        <div class="form-group">
+          <label>Hero Başlıq (şüar)</label>
+          <textarea name="hero_title" rows="2"><%= settings.hero_title || '' %></textarea>
+          <small style="color:#999;">Ana səhifənin başında böyük yazı</small>
+        </div>
+
+        <div class="form-group">
+          <label>Hero Alt Yazı</label>
+          <textarea name="hero_subtitle" rows="2"><%= settings.hero_subtitle || '' %></textarea>
+          <small style="color:#999;">Başlığın altında kiçik yazı</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>👤 Yazıçının portreti</label>
+            <input type="file" name="hero_portrait" accept="image/*">
+            <% if (settings.hero_portrait) { %>
+              <div class="current-file">
+                <img src="<%= settings.hero_portrait %>" alt="Portret">
+                <small>Mövcud portret</small>
+                <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px;">
+                  <input type="checkbox" name="remove_portrait" value="1">
+                  Bu şəkli sil
+                </label>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="form-group">
+            <label>🖼️ Hero fon şəkli</label>
+            <input type="file" name="hero_background" accept="image/*">
+            <% if (settings.hero_background) { %>
+              <div class="current-file">
+                <img src="<%= settings.hero_background %>" alt="Fon" style="max-width:200px;">
+                <small>Mövcud fon</small>
+                <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px;">
+                  <input type="checkbox" name="remove_background" value="1">
+                  Bu şəkli sil
+                </label>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- ============ HAQQINDA ============ -->
+        <h3 class="form-section-title">📖 Haqqında Bölməsi</h3>
+
+        <div class="form-group">
+          <label>Başlıq</label>
+          <input type="text" name="about_title" value="<%= settings.about_title || '' %>">
+        </div>
+
+        <div class="form-group">
+          <label>Mətn (bio)</label>
+          <textarea name="about_text" rows="6"><%= settings.about_text || '' %></textarea>
+        </div>
+
+        <!-- ============ ƏLAQƏ ============ -->
+        <h3 class="form-section-title">📧 Əlaqə Məlumatları</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="text" name="contact_email" value="<%= settings.contact_email || '' %>" placeholder="ornek@mail.com">
+          </div>
+
+          <div class="form-group">
+            <label>Telefon</label>
+            <input type="text" name="contact_phone" value="<%= settings.contact_phone || '' %>" placeholder="+994 50 XXX XX XX">
+          </div>
+        </div>
+
+        <!-- ============ SOSİAL ŞƏBƏKƏLƏR ============ -->
+        <h3 class="form-section-title">🌐 Sosial Şəbəkələr</h3>
+
+        <div class="form-group">
+          <label>📸 Instagram (link)</label>
+          <input type="text" name="social_instagram" value="<%= settings.social_instagram || '' %>" placeholder="https://instagram.com/...">
+        </div>
+
+        <div class="form-group">
+          <label>📘 Facebook (link)</label>
+          <input type="text" name="social_facebook" value="<%= settings.social_facebook || '' %>" placeholder="https://facebook.com/...">
+        </div>
+
+        <div class="form-group">
+          <label>📺 YouTube (link)</label>
+          <input type="text" name="social_youtube" value="<%= settings.social_youtube || '' %>" placeholder="https://youtube.com/@...">
+        </div>
+
+        <!-- ============ FOOTER ============ -->
+        <h3 class="form-section-title">🦶 Footer Mətni</h3>
+
+        <div class="form-group">
+          <label>Alt yazı</label>
+          <input type="text" name="footer_text" value="<%= settings.footer_text || '' %>">
+          <small style="color:#999;">Saytın ən aşağısında görünən mətn</small>
+        </div>
+
+        <!-- ============ YADDA SAXLA ============ -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">💾 Yadda saxla</button>
+          <a href="/" target="_blank" class="btn">👁️ Sayta bax</a>
+        </div>
+      </form>
+    </main>
+  </div>
+</body>
+</html>

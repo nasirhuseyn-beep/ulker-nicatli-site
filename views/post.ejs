@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= post.title %> — Ülkər Nicatlı</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <h1><a href="/">Ülkər Nicatlı</a></h1>
+      <nav>
+        <a href="/">Ana səhifə</a>
+        <a href="/kateqoriya/seir">Şeir</a>
+        <a href="/kateqoriya/hekaye">Hekayə</a>
+        <a href="/kateqoriya/roman">Roman</a>
+        <a href="/kateqoriya/koshe">Köşə yazısı</a>
+        <a href="/kitablar">📚 Kitablar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="single-post">
+      <span class="cat cat-<%= post.category %>"><%= post.category.toUpperCase() %></span>
+      <h1><%= post.title %></h1>
+      <small class="date"><%= post.created_at %></small>
+
+      <% if (post.image) { %>
+        <img src="<%= post.image %>" alt="<%= post.title %>" class="cover">
+      <% } %>
+
+      <% if (post.video) { %>
+        <video controls class="cover">
+          <source src="<%= post.video %>">
+          Brauzeriniz videonu dəstəkləmir.
+        </video>
+      <% } %>
+
+      <div class="content"><%= post.content %></div>
+    </article>
+
+    <section class="comments-section">
+      <h3>Şərhlər (<%= comments.length %>)</h3>
+
+      <% if (typeof sent !== 'undefined' && sent) { %>
+  <p class="ok">✅ Şərhiniz göndərildi. Təsdiqdən sonra yayımlanacaq.</p>
+<% } %>
+
+      <% if (comments.length === 0) { %>
+        <p class="empty">Hələ şərh yoxdur. İlk şərhi siz yazın!</p>
+      <% } else { %>
+        <% comments.forEach(c => { %>
+          <div class="comment">
+            <div class="comment-head">
+              <strong><%= c.name %></strong>
+              <small><%= c.created_at %></small>
+            </div>
+            <p><%= c.text %></p>
+          </div>
+        <% }) %>
+      <% } %>
+
+      <div class="comment-form">
+        <h4>Şərh yaz</h4>
+        <form method="POST" action="/yazi/<%= post.id %>/comment">
+          <input type="text" name="name" placeholder="Adınız" required>
+          <textarea name="text" rows="4" placeholder="Şərhinizi yazın..." required></textarea>
+          <button type="submit">Göndər</button>
+        </form>
+      </div>
+    </section>
+
+    <a href="/" class="back-link">← Geri qayıt</a>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 Ülkər Nicatlı — Bütün hüquqlar qorunur.</p>
+    </div>
+  </footer>
+</body>
+</html>

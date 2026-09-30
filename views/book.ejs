@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= book.title %> — Ülkər Nicatlı</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <h1><a href="/">Ülkər Nicatlı</a></h1>
+      <nav>
+        <a href="/">Ana səhifə</a>
+        <a href="/kateqoriya/seir">Şeir</a>
+        <a href="/kateqoriya/hekaye">Hekayə</a>
+        <a href="/kateqoriya/roman">Roman</a>
+        <a href="/kateqoriya/koshe">Köşə yazısı</a>
+        <a href="/kitablar" class="active">📚 Kitablar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <a href="/kitablar" class="back-link">← Bütün kitablar</a>
+
+    <article class="single-book">
+      <div class="book-cover-large">
+        <% if (book.cover) { %>
+          <img src="<%= book.cover %>" alt="<%= book.title %>">
+        <% } else { %>
+          <div class="book-placeholder-large">📖</div>
+        <% } %>
+      </div>
+
+      <div class="book-details">
+        <h1><%= book.title %></h1>
+
+        <ul class="book-meta">
+          <% if (book.year) { %>
+            <li><strong>Nəşr ili:</strong> <%= book.year %></li>
+          <% } %>
+          <% if (book.publisher) { %>
+            <li><strong>Nəşriyyat:</strong> <%= book.publisher %></li>
+          <% } %>
+          <% if (book.isbn) { %>
+            <li><strong>ISBN:</strong> <%= book.isbn %></li>
+          <% } %>
+        </ul>
+
+        <% if (book.description) { %>
+          <div class="book-description">
+            <h3>Təsvir</h3>
+            <p><%= book.description %></p>
+          </div>
+        <% } %>
+
+        <% if (book.buy_link) { %>
+          <a href="<%= book.buy_link %>" target="_blank" class="btn btn-primary buy-btn">
+            🛒 Kitabı al
+          </a>
+        <% } %>
+      </div>
+    </article>
+
+    <% if (book.sample_text) { %>
+      <section class="book-sample">
+        <h3 class="section-title">📝 Kitabdan nümunə</h3>
+        <div class="sample-content"><%= book.sample_text %></div>
+      </section>
+    <% } %>
+
+    <% if (book.video_link) { %>
+      <section class="book-video">
+        <h3 class="section-title">🎥 Video təqdimat</h3>
+        <div class="video-wrapper">
+          <iframe src="<%= book.video_link.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') %>"
+                  frameborder="0" allowfullscreen></iframe>
+        </div>
+      </section>
+    <% } %>
+
+    <% if (book.reviews) { %>
+      <section class="book-reviews">
+        <h3 class="section-title">💬 Oxucu rəyləri</h3>
+        <div class="reviews-list">
+          <% book.reviews.split('\n').filter(r => r.trim()).forEach(review => { %>
+            <div class="review-item">
+              <span class="quote-mark">"</span>
+              <p><%= review %></p>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <% if (book.gallery) { %>
+      <section class="book-gallery">
+        <h3 class="section-title">📸 Foto qalereya</h3>
+        <div class="gallery-grid">
+          <% book.gallery.split('\n').filter(g => g.trim()).forEach(img => { %>
+            <div class="gallery-item">
+              <img src="<%= img.trim() %>" alt="<%= book.title %>">
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <% if (otherBooks.length > 0) { %>
+      <section class="other-books">
+        <h3 class="section-title">📚 Digər kitablar</h3>
+        <div class="books-grid">
+          <% otherBooks.forEach(b => { %>
+            <article class="book-card">
+              <a href="/kitab/<%= b.id %>">
+                <% if (b.cover) { %>
+                  <img src="<%= b.cover %>" alt="<%= b.title %>">
+                <% } else { %>
+                  <div class="book-placeholder">📖</div>
+                <% } %>
+              </a>
+              <div class="book-info">
+                <h3><a href="/kitab/<%= b.id %>"><%= b.title %></a></h3>
+                <% if (b.year) { %><p class="book-year"><%= b.year %></p><% } %>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 Ülkər Nicatlı — Bütün hüquqlar qorunur.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitablar — Admin Panel</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-sidebar">
+      <h2>⚙️ Admin</h2>
+      <a href="/admin">📊 Dashboard</a>
+      <a href="/admin/posts">📝 Yazılar</a>
+      <a href="/admin/books" class="active">📚 Kitablar</a>
+      <a href="/admin/comments">💬 Şərhlər</a>
+      <a href="/admin/settings">⚙️ Sayt Sazlamaları</a>
+      <a href="/" target="_blank">🌐 Sayta bax</a>
+      <a href="/admin/logout">🚪 Çıxış</a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>📚 Kitablar</h1>
+        <a href="/admin/books/new" class="btn btn-primary">➕ Yeni kitab</a>
+      </div>
+
+      <% if (books.length === 0) { %>
+        <p class="empty">Hələ heç bir kitab yoxdur. İlk kitabı əlavə edin!</p>
+      <% } else { %>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Üz qabığı</th>
+              <th>Ad</th>
+              <th>İl</th>
+              <th>Nəşriyyat</th>
+              <th>Əməliyyat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% books.forEach(b => { %>
+              <tr>
+                <td>
+                  <% if (b.cover) { %>
+                    <img src="<%= b.cover %>" alt="<%= b.title %>" class="admin-thumb">
+                  <% } else { %>
+                    <span class="admin-no-image">📖</span>
+                  <% } %>
+                </td>
+                <td><strong><%= b.title %></strong></td>
+                <td><%= b.year || '—' %></td>
+                <td><%= b.publisher || '—' %></td>
+                <td class="actions">
+                  <a href="/kitab/<%= b.id %>" target="_blank" class="btn btn-sm">👁️</a>
+                  <a href="/admin/books/edit/<%= b.id %>" class="btn btn-sm">✏️ Redaktə</a>
+                  <form method="POST" action="/admin/books/delete/<%= b.id %>" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bu kitabı silmək istədiyinizə əminsiniz?');">🗑️ Sil</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </main>
+  </div>
+</body>
+</html>

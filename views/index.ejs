@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= settings.site_name || 'Ülkər Nicatlı' %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <h1><a href="/"><%= settings.site_name || 'Ülkər Nicatlı' %></a></h1>
+      <nav>
+        <a href="/">Ana səhifə</a>
+        <a href="/kateqoriya/seir">Şeir</a>
+        <a href="/kateqoriya/hekaye">Hekayə</a>
+        <a href="/kateqoriya/roman">Roman</a>
+        <a href="/kateqoriya/koshe">Köşə yazısı</a>
+        <a href="/kitablar">📚 Kitablar</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============ HERO BÖLMƏSİ ============ -->
+  <section class="hero-section" <% if (settings.hero_background) { %>style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('<%= settings.hero_background %>');"<% } %>>
+    <div class="hero-content">
+      <% if (settings.hero_portrait) { %>
+        <img src="<%= settings.hero_portrait %>" alt="<%= settings.site_name %>" class="hero-portrait">
+      <% } %>
+
+      <h2 class="hero-title"><%= settings.hero_title || 'Sözün, duyğunun və düşüncənin ünvanı' %></h2>
+
+      <% if (settings.hero_subtitle) { %>
+        <p class="hero-subtitle"><%= settings.hero_subtitle %></p>
+      <% } %>
+    </div>
+  </section>
+
+  <main class="container">
+    <h3 class="section-title">Son paylaşımlar</h3>
+
+    <div class="posts">
+      <% if (posts.length === 0) { %>
+        <p class="empty">Hələ heç bir yazı yoxdur. Admin paneldən əlavə edin.</p>
+      <% } else { %>
+        <% posts.forEach(p => { %>
+          <article class="post-card">
+            <% if (p.image) { %>
+              <a href="/yazi/<%= p.id %>">
+                <img src="<%= p.image %>" alt="<%= p.title %>">
+              </a>
+            <% } %>
+            <span class="cat cat-<%= p.category %>"><%= p.category.toUpperCase() %></span>
+            <h3><a href="/yazi/<%= p.id %>"><%= p.title %></a></h3>
+            <p class="post-preview"><%= p.content.substring(0, 150) %>...</p>
+            <small><%= p.created_at %></small>
+          </article>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <% if (books && books.length > 0) { %>
+      <section class="home-books">
+        <div class="section-header">
+          <h3 class="section-title">📚 Kitablar</h3>
+          <a href="/kitablar" class="see-all">Hamısına bax →</a>
+        </div>
+        <div class="books-grid">
+          <% books.forEach(b => { %>
+            <article class="book-card">
+              <a href="/kitab/<%= b.id %>">
+                <% if (b.cover) { %>
+                  <img src="<%= b.cover %>" alt="<%= b.title %>">
+                <% } else { %>
+                  <div class="book-placeholder">📖</div>
+                <% } %>
+              </a>
+              <div class="book-info">
+                <h3><a href="/kitab/<%= b.id %>"><%= b.title %></a></h3>
+                <% if (b.year) { %><p class="book-year"><%= b.year %></p><% } %>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p><%= settings.footer_text || '© 2025 Ülkər Nicatlı' %></p>
+      <a href="/admin/login" class="admin-link">Admin girişi</a>
+    </div>
+  </footer>
+</body>
+</html>

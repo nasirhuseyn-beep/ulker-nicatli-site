@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-sidebar">
+      <h2>⚙️ Admin</h2>
+      <a href="/admin" class="active">📊 Dashboard</a>
+      <a href="/admin/posts">📝 Yazılar</a>
+      <a href="/admin/books">📚 Kitablar</a>
+      <a href="/admin/comments">💬 Şərhlər</a>
+      <a href="/admin/settings">⚙️ Sayt Sazlamaları</a>
+      <a href="/" target="_blank">🌐 Sayta bax</a>
+      <a href="/admin/logout">🚪 Çıxış</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1>Dashboard</h1>
+      <p class="welcome">Xoş gəldiniz, <strong><%= user.username %></strong>!</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📝</div>
+          <div class="stat-info">
+            <h3><%= postCount %></h3>
+            <p>Ümumi yazı</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📚</div>
+          <div class="stat-info">
+            <h3><%= bookCount %></h3>
+            <p>Kitab</p>
+          </div>
+        </div>
+
+        <div class="stat-card <%= pendingComments > 0 ? 'alert' : '' %>">
+          <div class="stat-icon">💬</div>
+          <div class="stat-info">
+            <h3><%= pendingComments %></h3>
+            <p>Təsdiq gözləyən şərh</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <h2>Sürətli əməliyyatlar</h2>
+        <a href="/admin/posts/new" class="btn btn-primary">➕ Yeni yazı</a>
+        <a href="/admin/books/new" class="btn btn-primary">📚 Yeni kitab</a>
+        <a href="/admin/settings" class="btn">⚙️ Sayt sazlamaları</a>
+        <a href="/admin/posts" class="btn">📝 Yazıları idarə et</a>
+        <a href="/admin/books" class="btn">📚 Kitabları idarə et</a>
+        <% if (pendingComments > 0) { %>
+          <a href="/admin/comments" class="btn btn-warn">💬 Şərhlərə bax (<%= pendingComments %>)</a>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

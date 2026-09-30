@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= category.toUpperCase() %> — Ülkər Nicatlı</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <h1><a href="/">Ülkər Nicatlı</a></h1>
+      <nav>
+        <a href="/">Ana səhifə</a>
+        <a href="/kateqoriya/seir">Şeir</a>
+        <a href="/kateqoriya/hekaye">Hekayə</a>
+        <a href="/kateqoriya/roman">Roman</a>
+        <a href="/kateqoriya/koshe">Köşə yazısı</a>
+        <a href="/kitablar">📚 Kitablar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h2 class="section-title">
+      <% if (category === 'seir') { %>Şeirlər
+      <% } else if (category === 'hekaye') { %>Hekayələr
+      <% } else if (category === 'roman') { %>Romanlar
+      <% } else if (category === 'koshe') { %>Köşə yazıları
+      <% } else { %><%= category %><% } %>
+    </h2>
+
+    <div class="posts">
+      <% if (posts.length === 0) { %>
+        <p class="empty">Bu bölmədə hələ yazı yoxdur.</p>
+      <% } else { %>
+        <% posts.forEach(p => { %>
+          <article class="post-card">
+            <% if (p.image) { %>
+              <a href="/yazi/<%= p.id %>">
+                <img src="<%= p.image %>" alt="<%= p.title %>">
+              </a>
+            <% } %>
+            <h3><a href="/yazi/<%= p.id %>"><%= p.title %></a></h3>
+            <p class="post-preview"><%= p.content.substring(0, 120) %>...</p>
+            <small><%= p.created_at %></small>
+          </article>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <a href="/" class="back-link">← Ana səhifə</a>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 Ülkər Nicatlı — Bütün hüquqlar qorunur.</p>
+    </div>
+  </footer>
+</body>
+</html>

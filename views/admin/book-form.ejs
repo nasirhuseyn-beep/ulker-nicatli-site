@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= book ? 'Kitabı redaktə et' : 'Yeni kitab' %> — Admin Panel</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-sidebar">
+      <h2>⚙️ Admin</h2>
+      <a href="/admin">📊 Dashboard</a>
+      <a href="/admin/posts">📝 Yazılar</a>
+      <a href="/admin/books" class="active">📚 Kitablar</a>
+      <a href="/admin/comments">💬 Şərhlər</a>
+      <a href="/" target="_blank">🌐 Sayta bax</a>
+      <a href="/admin/logout">🚪 Çıxış</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1><%= book ? '✏️ Kitabı redaktə et' : '➕ Yeni kitab əlavə et' %></h1>
+
+      <form method="POST" enctype="multipart/form-data" class="post-form"
+            action="<%= book ? '/admin/books/edit/' + book.id : '/admin/books/new' %>">
+
+        <h3 class="form-section-title">📖 Əsas məlumatlar</h3>
+
+        <div class="form-group">
+          <label>Kitabın adı *</label>
+          <input type="text" name="title" placeholder="Kitabın adı..."
+                 value="<%= book ? book.title : '' %>" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nəşr ili</label>
+            <input type="text" name="year" placeholder="2024"
+                   value="<%= book ? (book.year || '') : '' %>">
+          </div>
+
+          <div class="form-group">
+            <label>Nəşriyyat</label>
+            <input type="text" name="publisher" placeholder="Nəşriyyatın adı..."
+                   value="<%= book ? (book.publisher || '') : '' %>">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>ISBN</label>
+          <input type="text" name="isbn" placeholder="978-..."
+                 value="<%= book ? (book.isbn || '') : '' %>">
+        </div>
+
+        <div class="form-group">
+          <label>Təsvir (kitab haqqında)</label>
+          <textarea name="description" rows="5"
+                    placeholder="Kitab haqqında qısa məlumat..."><%= book ? (book.description || '') : '' %></textarea>
+        </div>
+
+        <h3 class="form-section-title">📝 Nümunə mətn</h3>
+
+        <div class="form-group">
+          <label>Nümunə (ilk şeir və ya fəsil)</label>
+          <textarea name="sample_text" rows="8"
+                    placeholder="Kitabdan nümunə - oxucular bunu görəcək..."><%= book ? (book.sample_text || '') : '' %></textarea>
+          <small style="color:#999;">İlk şeir və ya fəsil - oxucunu cəlb etmək üçün</small>
+        </div>
+
+        <h3 class="form-section-title">💬 Oxucu rəyləri</h3>
+
+        <div class="form-group">
+          <label>Rəylər (hər sətirdə bir rəy)</label>
+          <textarea name="reviews" rows="5"
+                    placeholder="Çox gözəl kitabdır! - Aynur&#10;Mütləq oxuyun! - Kamran"><%= book ? (book.reviews || '') : '' %></textarea>
+          <small style="color:#999;">Format: "Rəy mətni - Ad" (hər sətirdə bir)</small>
+        </div>
+
+        <h3 class="form-section-title">🎥 Video & 📸 Foto</h3>
+
+        <div class="form-group">
+          <label>🎥 YouTube video linki</label>
+          <input type="text" name="video_link" placeholder="https://www.youtube.com/watch?v=..."
+                 value="<%= book ? (book.video_link || '') : '' %>">
+          <small style="color:#999;">YouTube linkini kopyalayıb yapışdırın</small>
+        </div>
+
+        <div class="form-group">
+          <label>📸 Foto qalereya (linklər)</label>
+          <textarea name="gallery" rows="4"
+                    placeholder="/uploads/foto1.jpg&#10;/uploads/foto2.jpg"><%= book ? (book.gallery || '') : '' %></textarea>
+          <small style="color:#999;">Hər sətirdə bir şəkil linki</small>
+        </div>
+
+        <h3 class="form-section-title">🛒 Alış & Üz qabığı</h3>
+
+        <div class="form-group">
+          <label>🛒 Alış linki</label>
+          <input type="text" name="buy_link" placeholder="https://..."
+                 value="<%= book ? (book.buy_link || '') : '' %>">
+          <small style="color:#999;">Kitab mağazasının linki</small>
+        </div>
+
+        <div class="form-group">
+          <label>📖 Üz qabığı (şəkil)</label>
+          <input type="file" name="cover" accept="image/*">
+          <% if (book && book.cover) { %>
+            <div class="current-file">
+              <img src="<%= book.cover %>" alt="Mövcud üz qabığı">
+              <small>Mövcud üz qabığı</small>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <%= book ? '💾 Yadda saxla' : '✅ Əlavə et' %>
+          </button>
+          <a href="/admin/books" class="btn">❌ Ləğv et</a>
+        </div>
+      </form>
+    </main>
+  </div>
+</body>
+</html>

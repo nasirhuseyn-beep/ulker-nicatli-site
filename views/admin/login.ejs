@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Girişi — Ülkər Nicatlı</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="login-page">
+  <div class="login-box">
+    <h1>🔐 Admin Girişi</h1>
+    <p class="subtitle">Ülkər Nicatlı saytı</p>
+
+    <% if (error) { %>
+      <p class="err">❌ <%= error %></p>
+    <% } %>
+
+    <form method="POST" action="/admin/login">
+      <label>
+        İstifadəçi adı
+        <input type="text" name="username" placeholder="admin" required autofocus>
+      </label>
+      <label>
+        Şifrə
+        <input type="password" name="password" placeholder="••••••••" required>
+      </label>
+      <button type="submit">Daxil ol</button>
+    </form>
+
+    <a href="/" class="back-link">← Sayta qayıt</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= post ? 'Redaktə et' : 'Yeni yazı' %> — Admin Panel</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-sidebar">
+      <h2>⚙️ Admin</h2>
+      <a href="/admin">📊 Dashboard</a>
+      <a href="/admin/posts" class="active">📝 Yazılar</a>
+      <a href="/admin/comments">💬 Şərhlər</a>
+      <a href="/" target="_blank">🌐 Sayta bax</a>
+      <a href="/admin/logout">🚪 Çıxış</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1><%= post ? '✏️ Yazını redaktə et' : '➕ Yeni yazı əlavə et' %></h1>
+
+      <form method="POST" enctype="multipart/form-data" class="post-form"
+            action="<%= post ? '/admin/posts/edit/' + post.id : '/admin/posts/new' %>">
+
+        <div class="form-group">
+          <label>Başlıq *</label>
+          <input type="text" name="title" placeholder="Yazının başlığı..."
+                 value="<%= post ? post.title : '' %>" required>
+        </div>
+
+        <div class="form-group">
+          <label>Kateqoriya *</label>
+          <select name="category" required>
+            <option value="seir" <%= post && post.category === 'seir' ? 'selected' : '' %>>🌸 Şeir</option>
+            <option value="hekaye" <%= post && post.category === 'hekaye' ? 'selected' : '' %>>📖 Hekayə</option>
+            <option value="roman" <%= post && post.category === 'roman' ? 'selected' : '' %>>📚 Roman</option>
+            <option value="koshe" <%= post && post.category === 'koshe' ? 'selected' : '' %>>✍️ Köşə yazısı</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Mətn *</label>
+          <textarea name="content" rows="18" placeholder="Yazınızı buraya yazın..." required><%= post ? post.content : '' %></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>📷 Şəkil (optional)</label>
+            <input type="file" name="image" accept="image/*">
+            <% if (post && post.image) { %>
+              <div class="current-file">
+                <img src="<%= post.image %>" alt="Mövcud şəkil">
+                <small>Mövcud şəkil (dəyişmək üçün yenisini seçin)</small>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="form-group">
+            <label>🎥 Video (optional)</label>
+            <input type="file" name="video" accept="video/*">
+            <% if (post && post.video) { %>
+              <div class="current-file">
+                <video src="<%= post.video %>" controls></video>
+                <small>Mövcud video (dəyişmək üçün yenisini seçin)</small>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <%= post ? '💾 Yadda saxla' : '✅ Əlavə et' %>
+          </button>
+          <a href="/admin/posts" class="btn">❌ Ləğv et</a>
+        </div>
+      </form>
+    </main>
+  </div>
+</body>
+</html>
