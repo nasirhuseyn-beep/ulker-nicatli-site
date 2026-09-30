@@ -3,3 +3,9 @@ database.db
 .env
 .DS_Store
 *.log
+# Böyük fayllar
+*.exe
+*.zip
+*.rar
+*.msi
+*.7z
