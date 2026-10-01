@@ -43,7 +43,13 @@
             <% } %>
             <h3><a href="/yazi/<%= p.id %>"><%= p.title %></a></h3>
             <p class="post-preview"><%= p.content.substring(0, 120) %>...</p>
-            <small><%= p.created_at %></small>
+            <div class="post-stats">
+              <small class="post-date"><%= p.created_at %></small>
+              <span class="post-meta">
+                <span title="Baxış">👁️ <%= p.views || 0 %></span>
+                <span title="Bəyənmə">❤️ <%= p.likes || 0 %></span>
+              </span>
+            </div>
           </article>
         <% }) %>
       <% } %>

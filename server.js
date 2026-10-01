@@ -22,6 +22,8 @@ db.serialize(() => {
     content TEXT,
     image TEXT,
     video TEXT,
+    views INTEGER DEFAULT 0,
+    likes INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
@@ -51,13 +53,11 @@ db.serialize(() => {
     FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE
   )`);
 
-  // ---------- SETTINGS CƏDVƏLİ (YENİ!) ----------
   db.run(`CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
     value TEXT
   )`);
 
-  // Default dəyərlər
   db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES 
     ('site_name', 'Ülkər Nicatlı'),
     ('hero_title', 'Sözün, duyğunun və düşüncənin ünvanı'),
@@ -74,7 +74,6 @@ db.serialize(() => {
     ('footer_text', '© 2025 Ülkər Nicatlı — Bütün hüquqlar qorunur.')
   `);
 
-  // Default admin: admin / admin123
   const hash = bcrypt.hashSync('admin123', 10);
   db.run(`INSERT OR IGNORE INTO users (id, username, password) VALUES (1, 'admin', ?)`, [hash]);
 });
@@ -92,12 +91,10 @@ app.use(session({
   saveUninitialized: false
 }));
 
-// DB-ni hər request-də əlçatan et + settings yüklə
 app.use((req, res, next) => {
   req.db = db;
   res.locals.user = req.session.user || null;
   
-  // Settings-ləri yüklə (hər səhifədə lazımdır)
   db.all('SELECT key, value FROM settings', (err, rows) => {
     const settings = {};
     if (rows) {

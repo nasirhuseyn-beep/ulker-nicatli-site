@@ -23,14 +23,31 @@ module.exports = (db) => {
     });
   });
 
-  // ========== TƏK YAZI ==========
+  // ========== TƏK YAZI (BAXIŞ SAYI ARTIR) ==========
   router.get('/yazi/:id', (req, res) => {
     const id = req.params.id;
+    
+    // Baxış sayını artır
+    db.run('UPDATE posts SET views = views + 1 WHERE id = ?', [id]);
+    
     db.get('SELECT * FROM posts WHERE id = ?', [id], (err, post) => {
       if (!post) return res.status(404).send('Yazi tapilmadi');
       db.all('SELECT * FROM comments WHERE post_id = ? AND approved = 1 ORDER BY created_at DESC', [id], (err, comments) => {
         if (err) comments = [];
         res.render('post', { post: post, comments: comments, sent: req.query.sent });
+      });
+    });
+  });
+
+  // ========== BƏYƏNMƏ ==========
+  router.post('/yazi/:id/like', (req, res) => {
+    const id = req.params.id;
+    db.run('UPDATE posts SET likes = likes + 1 WHERE id = ?', [id], (err) => {
+      if (err) {
+        return res.json({ success: false });
+      }
+      db.get('SELECT likes FROM posts WHERE id = ?', [id], (err, row) => {
+        res.json({ success: true, likes: row ? row.likes : 0 });
       });
     });
   });

@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 
-// Fayl yükləmə sazlaması
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
@@ -42,10 +41,14 @@ module.exports = (db) => {
     db.get('SELECT COUNT(*) as c FROM posts', (e, p) => {
       db.get('SELECT COUNT(*) as c FROM comments WHERE approved = 0', (e, c) => {
         db.get('SELECT COUNT(*) as c FROM books', (e, b) => {
-          res.render('admin/dashboard', {
-            postCount: p.c,
-            pendingComments: c.c,
-            bookCount: b.c
+          db.get('SELECT SUM(views) as total_views, SUM(likes) as total_likes FROM posts', (e, s) => {
+            res.render('admin/dashboard', {
+              postCount: p.c,
+              pendingComments: c.c,
+              bookCount: b.c,
+              totalViews: s ? (s.total_views || 0) : 0,
+              totalLikes: s ? (s.total_likes || 0) : 0
+            });
           });
         });
       });
@@ -53,7 +56,7 @@ module.exports = (db) => {
   });
 
   // ============================================
-  // ---------- SAYT SAZLAMALARI (SETTINGS) ----------
+  // ---------- SAYT SAZLAMALARI ----------
   // ============================================
   router.get('/settings', requireAuth, (req, res) => {
     db.all('SELECT key, value FROM settings', (err, rows) => {
@@ -75,7 +78,6 @@ module.exports = (db) => {
       'footer_text'
     ];
 
-    // Normal sahələri yenilə
     fields.forEach(field => {
       if (req.body[field] !== undefined) {
         db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
@@ -83,7 +85,6 @@ module.exports = (db) => {
       }
     });
 
-    // Şəkilləri yüklə (əgər varsa)
     if (req.files && req.files.hero_portrait && req.files.hero_portrait[0]) {
       const portrait = '/uploads/' + req.files.hero_portrait[0].filename;
       db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
@@ -95,7 +96,6 @@ module.exports = (db) => {
         ['hero_background', bg]);
     }
 
-    // Şəkilləri sil (əgər "remove" basılıbsa)
     if (req.body.remove_portrait === '1') {
       db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
         ['hero_portrait', '']);
@@ -105,12 +105,11 @@ module.exports = (db) => {
         ['hero_background', '']);
     }
 
-    // Yadda saxlanandan sonra yönləndir
     setTimeout(() => res.redirect('/admin/settings?saved=1'), 200);
   });
 
   // ============================================
-  // ---------- YAZILAR (POSTS) ----------
+  // ---------- YAZILAR ----------
   // ============================================
   router.get('/posts', requireAuth, (req, res) => {
     db.all('SELECT * FROM posts ORDER BY created_at DESC', (err, posts) => {
@@ -153,7 +152,7 @@ module.exports = (db) => {
   });
 
   // ============================================
-  // ---------- KİTABLAR (BOOKS) ----------
+  // ---------- KİTABLAR ----------
   // ============================================
   router.get('/books', requireAuth, (req, res) => {
     db.all('SELECT * FROM books ORDER BY created_at DESC', (err, books) => {
@@ -195,7 +194,7 @@ module.exports = (db) => {
   });
 
   // ============================================
-  // ---------- ŞƏRHLƏR (COMMENTS) ----------
+  // ---------- ŞƏRHLƏR ----------
   // ============================================
   router.get('/comments', requireAuth, (req, res) => {
     db.all('SELECT comments.*, posts.title as post_title FROM comments JOIN posts ON posts.id = comments.post_id ORDER BY comments.created_at DESC', (err, comments) => {
@@ -211,6 +210,7 @@ module.exports = (db) => {
   router.post('/comments/delete/:id', requireAuth, (req, res) => {
     db.run('DELETE FROM comments WHERE id = ?', [req.params.id], () => res.redirect('/admin/comments'));
   });
+
   // ============================================
   // ---------- ŞİFRƏ DƏYİŞMƏ ----------
   // ============================================
@@ -222,53 +222,28 @@ module.exports = (db) => {
     const { current_password, new_password, confirm_password } = req.body;
 
     if (!current_password || !new_password || !confirm_password) {
-      return res.render('admin/password', { 
-        error: 'Butun saheleri doldurun', 
-        success: null 
-      });
+      return res.render('admin/password', { error: 'Butun saheleri doldurun', success: null });
     }
-
     if (new_password !== confirm_password) {
-      return res.render('admin/password', { 
-        error: 'Yeni sifreler uygun deyil', 
-        success: null 
-      });
+      return res.render('admin/password', { error: 'Yeni sifreler uygun deyil', success: null });
     }
-
     if (new_password.length < 6) {
-      return res.render('admin/password', { 
-        error: 'Yeni sifre en azi 6 simvol olmalidir', 
-        success: null 
-      });
+      return res.render('admin/password', { error: 'Yeni sifre en azi 6 simvol olmalidir', success: null });
     }
 
     db.get('SELECT * FROM users WHERE id = ?', [req.session.user.id], (err, user) => {
       if (err || !user) {
-        return res.render('admin/password', { 
-          error: 'Istifadeci tapilmadi', 
-          success: null 
-        });
+        return res.render('admin/password', { error: 'Istifadeci tapilmadi', success: null });
       }
-
       if (!bcrypt.compareSync(current_password, user.password)) {
-        return res.render('admin/password', { 
-          error: 'Cari sifre yanlisdir', 
-          success: null 
-        });
+        return res.render('admin/password', { error: 'Cari sifre yanlisdir', success: null });
       }
-
       const newHash = bcrypt.hashSync(new_password, 10);
       db.run('UPDATE users SET password = ? WHERE id = ?', [newHash, user.id], (err) => {
         if (err) {
-          return res.render('admin/password', { 
-            error: 'Xeta bas verdi', 
-            success: null 
-          });
+          return res.render('admin/password', { error: 'Xeta bas verdi', success: null });
         }
-        res.render('admin/password', { 
-          error: null, 
-          success: 'Sifre ugurla deyisdirildi!' 
-        });
+        res.render('admin/password', { error: null, success: 'Sifre ugurla deyisdirildi!' });
       });
     });
   });

@@ -35,6 +35,8 @@
               <th>ID</th>
               <th>Başlıq</th>
               <th>Kateqoriya</th>
+              <th>👁️ Baxış</th>
+              <th>❤️ Bəyənmə</th>
               <th>Tarix</th>
               <th>Əməliyyat</th>
             </tr>
@@ -49,7 +51,17 @@
                   <% if (p.video) { %> <span class="badge">🎥</span><% } %>
                 </td>
                 <td><span class="cat cat-<%= p.category %>"><%= p.category %></span></td>
-                <td><%= p.created_at %></td>
+                <td>
+                  <span class="stat-badge stat-views">
+                    👁️ <%= p.views || 0 %>
+                  </span>
+                </td>
+                <td>
+                  <span class="stat-badge stat-likes">
+                    ❤️ <%= p.likes || 0 %>
+                  </span>
+                </td>
+                <td><small><%= p.created_at %></small></td>
                 <td class="actions">
                   <a href="/admin/posts/edit/<%= p.id %>" class="btn btn-sm">✏️ Redaktə</a>
                   <form method="POST" action="/admin/posts/delete/<%= p.id %>" style="display:inline;">
