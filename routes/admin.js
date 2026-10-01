@@ -43,9 +43,9 @@ module.exports = (db) => {
         db.get('SELECT COUNT(*) as c FROM books', (e, b) => {
           db.get('SELECT SUM(views) as total_views, SUM(likes) as total_likes FROM posts', (e, s) => {
             res.render('admin/dashboard', {
-              postCount: p.c,
-              pendingComments: c.c,
-              bookCount: b.c,
+              postCount: p ? p.c : 0,
+              pendingComments: c ? c.c : 0,
+              bookCount: b ? b.c : 0,
               totalViews: s ? (s.total_views || 0) : 0,
               totalLikes: s ? (s.total_likes || 0) : 0
             });
@@ -78,34 +78,47 @@ module.exports = (db) => {
       'footer_text'
     ];
 
+    // Normal sahələri yenilə (PostgreSQL ON CONFLICT)
     fields.forEach(field => {
       if (req.body[field] !== undefined) {
-        db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-          [field, req.body[field]]);
+        db.run(
+          'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+          [field, req.body[field]]
+        );
       }
     });
 
+    // Şəkilləri yüklə (əgər varsa)
     if (req.files && req.files.hero_portrait && req.files.hero_portrait[0]) {
       const portrait = '/uploads/' + req.files.hero_portrait[0].filename;
-      db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-        ['hero_portrait', portrait]);
+      db.run(
+        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+        ['hero_portrait', portrait]
+      );
     }
     if (req.files && req.files.hero_background && req.files.hero_background[0]) {
       const bg = '/uploads/' + req.files.hero_background[0].filename;
-      db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-        ['hero_background', bg]);
+      db.run(
+        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+        ['hero_background', bg]
+      );
     }
 
+    // Şəkilləri sil
     if (req.body.remove_portrait === '1') {
-      db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-        ['hero_portrait', '']);
+      db.run(
+        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+        ['hero_portrait', '']
+      );
     }
     if (req.body.remove_background === '1') {
-      db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-        ['hero_background', '']);
+      db.run(
+        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+        ['hero_background', '']
+      );
     }
 
-    setTimeout(() => res.redirect('/admin/settings?saved=1'), 200);
+    setTimeout(() => res.redirect('/admin/settings?saved=1'), 300);
   });
 
   // ============================================
