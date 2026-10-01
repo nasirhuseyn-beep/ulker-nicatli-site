@@ -211,6 +211,67 @@ module.exports = (db) => {
   router.post('/comments/delete/:id', requireAuth, (req, res) => {
     db.run('DELETE FROM comments WHERE id = ?', [req.params.id], () => res.redirect('/admin/comments'));
   });
+  // ============================================
+  // ---------- ŞİFRƏ DƏYİŞMƏ ----------
+  // ============================================
+  router.get('/password', requireAuth, (req, res) => {
+    res.render('admin/password', { error: null, success: null });
+  });
+
+  router.post('/password', requireAuth, (req, res) => {
+    const { current_password, new_password, confirm_password } = req.body;
+
+    if (!current_password || !new_password || !confirm_password) {
+      return res.render('admin/password', { 
+        error: 'Butun saheleri doldurun', 
+        success: null 
+      });
+    }
+
+    if (new_password !== confirm_password) {
+      return res.render('admin/password', { 
+        error: 'Yeni sifreler uygun deyil', 
+        success: null 
+      });
+    }
+
+    if (new_password.length < 6) {
+      return res.render('admin/password', { 
+        error: 'Yeni sifre en azi 6 simvol olmalidir', 
+        success: null 
+      });
+    }
+
+    db.get('SELECT * FROM users WHERE id = ?', [req.session.user.id], (err, user) => {
+      if (err || !user) {
+        return res.render('admin/password', { 
+          error: 'Istifadeci tapilmadi', 
+          success: null 
+        });
+      }
+
+      if (!bcrypt.compareSync(current_password, user.password)) {
+        return res.render('admin/password', { 
+          error: 'Cari sifre yanlisdir', 
+          success: null 
+        });
+      }
+
+      const newHash = bcrypt.hashSync(new_password, 10);
+      db.run('UPDATE users SET password = ? WHERE id = ?', [newHash, user.id], (err) => {
+        if (err) {
+          return res.render('admin/password', { 
+            error: 'Xeta bas verdi', 
+            success: null 
+          });
+        }
+        res.render('admin/password', { 
+          error: null, 
+          success: 'Sifre ugurla deyisdirildi!' 
+        });
+      });
+    });
+  });
 
   return router;
 };

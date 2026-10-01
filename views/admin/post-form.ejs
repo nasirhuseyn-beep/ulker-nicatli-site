@@ -9,13 +9,16 @@
 <body>
   <div class="admin-wrap">
     <aside class="admin-sidebar">
-      <h2>⚙️ Admin</h2>
-      <a href="/admin">📊 Dashboard</a>
-      <a href="/admin/posts" class="active">📝 Yazılar</a>
-      <a href="/admin/comments">💬 Şərhlər</a>
-      <a href="/" target="_blank">🌐 Sayta bax</a>
-      <a href="/admin/logout">🚪 Çıxış</a>
-    </aside>
+  <h2>⚙️ Admin</h2>
+  <a href="/admin">📊 Dashboard</a>
+  <a href="/admin/posts" class="active">📝 Yazılar</a>
+  <a href="/admin/books">📚 Kitablar</a>
+  <a href="/admin/comments">💬 Şərhlər</a>
+  <a href="/admin/settings">⚙️ Sayt Sazlamaları</a>
+  <a href="/admin/password">🔒 Şifrə Dəyişmə</a>
+  <a href="/" target="_blank">🌐 Sayta bax</a>
+  <a href="/admin/logout">🚪 Çıxış</a>
+</aside>
 
     <main class="admin-main">
       <h1><%= post ? '✏️ Yazını redaktə et' : '➕ Yeni yazı əlavə et' %></h1>
