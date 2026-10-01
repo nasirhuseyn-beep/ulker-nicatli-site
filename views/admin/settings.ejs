@@ -15,6 +15,7 @@
       <a href="/admin/books">📚 Kitablar</a>
       <a href="/admin/comments">💬 Şərhlər</a>
       <a href="/admin/settings" class="active">⚙️ Sayt Sazlamaları</a>
+      <a href="/admin/password">🔒 Şifrə Dəyişmə</a>
       <a href="/" target="_blank">🌐 Sayta bax</a>
       <a href="/admin/logout">🚪 Çıxış</a>
     </aside>
@@ -28,8 +29,7 @@
 
       <form method="POST" enctype="multipart/form-data" class="post-form">
 
-        <!-- ============ HERO BÖLMƏSİ ============ -->
-        <h3 class="form-section-title">🏠 Hero Bölməsi (Ana Səhifə)</h3>
+        <h3 class="form-section-title">🏠 HERO BÖLMƏSİ (ANA SƏHİFƏ)</h3>
 
         <div class="form-group">
           <label>Saytın adı</label>
@@ -81,8 +81,7 @@
           </div>
         </div>
 
-        <!-- ============ HAQQINDA ============ -->
-        <h3 class="form-section-title">📖 Haqqında Bölməsi</h3>
+        <h3 class="form-section-title">📖 HAQQINDA BÖLMƏSİ</h3>
 
         <div class="form-group">
           <label>Başlıq</label>
@@ -94,8 +93,7 @@
           <textarea name="about_text" rows="6"><%= settings.about_text || '' %></textarea>
         </div>
 
-        <!-- ============ ƏLAQƏ ============ -->
-        <h3 class="form-section-title">📧 Əlaqə Məlumatları</h3>
+        <h3 class="form-section-title">📧 ƏLAQƏ MƏLUMATLARI</h3>
 
         <div class="form-row">
           <div class="form-group">
@@ -109,8 +107,7 @@
           </div>
         </div>
 
-        <!-- ============ SOSİAL ŞƏBƏKƏLƏR ============ -->
-        <h3 class="form-section-title">🌐 Sosial Şəbəkələr</h3>
+        <h3 class="form-section-title">🌐 SOSİAL ŞƏBƏKƏLƏR</h3>
 
         <div class="form-group">
           <label>📸 Instagram (link)</label>
@@ -127,8 +124,7 @@
           <input type="text" name="social_youtube" value="<%= settings.social_youtube || '' %>" placeholder="https://youtube.com/@...">
         </div>
 
-        <!-- ============ FOOTER ============ -->
-        <h3 class="form-section-title">🦶 Footer Mətni</h3>
+        <h3 class="form-section-title">🦶 FOOTER MƏTNİ</h3>
 
         <div class="form-group">
           <label>Alt yazı</label>
@@ -136,7 +132,6 @@
           <small style="color:#999;">Saytın ən aşağısında görünən mətn</small>
         </div>
 
-        <!-- ============ YADDA SAXLA ============ -->
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">💾 Yadda saxla</button>
           <a href="/" target="_blank" class="btn">👁️ Sayta bax</a>

@@ -1,82 +1,181 @@
+require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-const db = new sqlite3.Database('./database.db');
 
-// ---------- VERİLƏNLƏR BAZASI ----------
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    category TEXT,
-    content TEXT,
-    image TEXT,
-    video TEXT,
-    views INTEGER DEFAULT 0,
-    likes INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS books (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    cover TEXT,
-    year TEXT,
-    publisher TEXT,
-    isbn TEXT,
-    description TEXT,
-    sample_text TEXT,
-    reviews TEXT,
-    video_link TEXT,
-    gallery TEXT,
-    buy_link TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS comments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    post_id INTEGER,
-    name TEXT,
-    text TEXT,
-    approved INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  )`);
-
-  db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES 
-    ('site_name', 'Ülkər Nicatlı'),
-    ('hero_title', 'Sözün, duyğunun və düşüncənin ünvanı'),
-    ('hero_subtitle', 'Ülkər Nicatlı''nın şeirləri, hekayələri və yazıları.'),
-    ('hero_portrait', ''),
-    ('hero_background', ''),
-    ('about_title', 'Haqqında'),
-    ('about_text', 'Bu bölmədə müəllif haqqında məlumat yerləşdirilə bilər.'),
-    ('contact_email', ''),
-    ('contact_phone', ''),
-    ('social_instagram', ''),
-    ('social_facebook', ''),
-    ('social_youtube', ''),
-    ('footer_text', '© 2025 Ülkər Nicatlı — Bütün hüquqlar qorunur.')
-  `);
-
-  const hash = bcrypt.hashSync('admin123', 10);
-  db.run(`INSERT OR IGNORE INTO users (id, username, password) VALUES (1, 'admin', ?)`, [hash]);
+// ---------- POSTGRESQL BAĞLANTI ----------
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
+
+// ---------- AĞILLI WRAPPER (SQLite → PostgreSQL) ----------
+// Bu wrapper köhnə SQLite sintaksisini PostgreSQL-ə çevirir
+// Beləliklə, routes/ fayllarına toxunmaq lazım deyil!
+
+function convertSql(sql) {
+  // "?" → "$1, $2, $3" çevir
+  let counter = 1;
+  return sql.replace(/\?/g, () => `$${counter++}`);
+}
+
+const db = {
+  // db.get() — 1 sətir qaytarır
+  get: (sql, params, callback) => {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    const pgSql = convertSql(sql);
+    pool.query(pgSql, params || [])
+      .then(result => callback(null, result.rows[0]))
+      .catch(err => callback(err));
+  },
+  
+  // db.all() — bütün sətirləri qaytarır
+  all: (sql, params, callback) => {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    const pgSql = convertSql(sql);
+    pool.query(pgSql, params || [])
+      .then(result => callback(null, result.rows))
+      .catch(err => callback(err));
+  },
+  
+  // db.run() — INSERT/UPDATE/DELETE üçün
+  run: (sql, params, callback) => {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    const pgSql = convertSql(sql);
+    pool.query(pgSql, params || [])
+      .then(result => {
+        if (callback) callback(null, result);
+      })
+      .catch(err => {
+        if (callback) callback(err);
+        else console.error('DB Error:', err);
+      });
+  },
+  
+  // db.serialize() — SQLite üçün idi, indi heç nə etmir
+  serialize: (callback) => {
+    if (callback) callback();
+  }
+};
+
+// ---------- VERİLƏNLƏR BAZASI SXEMİ ----------
+async function initDatabase() {
+  try {
+    // USERS cədvəli
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE,
+        password TEXT
+      )
+    `);
+
+    // POSTS cədvəli
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS posts (
+        id SERIAL PRIMARY KEY,
+        title TEXT,
+        category TEXT,
+        content TEXT,
+        image TEXT,
+        video TEXT,
+        views INTEGER DEFAULT 0,
+        likes INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // BOOKS cədvəli
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS books (
+        id SERIAL PRIMARY KEY,
+        title TEXT,
+        cover TEXT,
+        year TEXT,
+        publisher TEXT,
+        isbn TEXT,
+        description TEXT,
+        sample_text TEXT,
+        reviews TEXT,
+        video_link TEXT,
+        gallery TEXT,
+        buy_link TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // COMMENTS cədvəli
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id SERIAL PRIMARY KEY,
+        post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+        name TEXT,
+        text TEXT,
+        approved INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // SETTINGS cədvəli
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      )
+    `);
+
+    // Default settings
+    const defaultSettings = [
+      ['site_name', 'Ülkər Nicatlı'],
+      ['hero_title', 'Sözün, duyğunun və düşüncənin ünvanı'],
+      ['hero_subtitle', "Ülkər Nicatlı'nın şeirləri, hekayələri və yazıları."],
+      ['hero_portrait', ''],
+      ['hero_background', ''],
+      ['about_title', 'Haqqında'],
+      ['about_text', 'Bu bölmədə müəllif haqqında məlumat yerləşdirilə bilər.'],
+      ['contact_email', ''],
+      ['contact_phone', ''],
+      ['social_instagram', ''],
+      ['social_facebook', ''],
+      ['social_youtube', ''],
+      ['footer_text', '© 2025 Ülkər Nicatlı — Bütün hüquqlar qorunur.']
+    ];
+
+    for (const [key, value] of defaultSettings) {
+      await pool.query(
+        `INSERT INTO settings (key, value) VALUES ($1, $2) 
+         ON CONFLICT (key) DO NOTHING`,
+        [key, value]
+      );
+    }
+
+    // Default admin
+    const hash = bcrypt.hashSync('admin123', 10);
+    await pool.query(
+      `INSERT INTO users (id, username, password) VALUES (1, 'admin', $1)
+       ON CONFLICT (id) DO NOTHING`,
+      [hash]
+    );
+
+    console.log('✅ Database initialized (PostgreSQL)');
+  } catch (err) {
+    console.error('❌ Database init error:', err.message);
+  }
+}
 
 // ---------- MIDDLEWARE ----------
 app.set('view engine', 'ejs');
@@ -91,6 +190,7 @@ app.use(session({
   saveUninitialized: false
 }));
 
+// DB-ni hər request-də əlçatan et + settings yüklə
 app.use((req, res, next) => {
   req.db = db;
   res.locals.user = req.session.user || null;
@@ -111,10 +211,14 @@ app.use('/admin', require('./routes/admin')(db));
 
 // ---------- BAŞLAT ----------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log('=================================');
-  console.log('✅ Sayt işləyir: http://localhost:' + PORT);
-  console.log('🔐 Admin: http://localhost:' + PORT + '/admin/login');
-  console.log('👤 İstifadəçi: admin / admin123');
-  console.log('=================================');
+
+initDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log('=================================');
+    console.log('✅ Sayt işləyir: http://localhost:' + PORT);
+    console.log('🔐 Admin: http://localhost:' + PORT + '/admin/login');
+    console.log('👤 İstifadəçi: admin / admin123');
+    console.log('📊 Database: PostgreSQL (Supabase)');
+    console.log('=================================');
+  });
 });
