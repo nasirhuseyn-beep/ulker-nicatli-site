@@ -9,3 +9,6 @@ database.db
 *.rar
 *.msi
 *.7z
+supabase-password.txt
+supabase-url.txt
+*.txt
