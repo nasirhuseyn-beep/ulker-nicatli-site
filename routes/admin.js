@@ -2,12 +2,45 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+// Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
+// Multer — yaddaşda saxla (disk yerinə)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }
 });
-const upload = multer({ storage: storage });
+
+// Supabase-ə şəkil yükləmə funksiyası
+async function uploadToSupabase(file) {
+  if (!file) return null;
+  
+  const ext = path.extname(file.originalname);
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+  
+  const { data, error } = await supabase.storage
+    .from('uploads')
+    .upload(filename, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false
+    });
+  
+  if (error) {
+    console.error('Supabase upload error:', error);
+    return null;
+  }
+  
+  const { data: urlData } = supabase.storage
+    .from('uploads')
+    .getPublicUrl(filename);
+  
+  return urlData.publicUrl;
+}
 
 module.exports = (db) => {
   const router = express.Router();
@@ -55,9 +88,7 @@ module.exports = (db) => {
     });
   });
 
-  // ============================================
   // ---------- SAYT SAZLAMALARI ----------
-  // ============================================
   router.get('/settings', requireAuth, (req, res) => {
     db.all('SELECT key, value FROM settings', (err, rows) => {
       const settings = {};
@@ -68,7 +99,7 @@ module.exports = (db) => {
 
   router.post('/settings', requireAuth,
     upload.fields([{ name: 'hero_portrait' }, { name: 'hero_background' }]),
-    (req, res) => {
+    async (req, res) => {
 
     const fields = [
       'site_name', 'hero_title', 'hero_subtitle',
@@ -78,7 +109,6 @@ module.exports = (db) => {
       'footer_text'
     ];
 
-    // Normal sahələri yenilə (PostgreSQL ON CONFLICT)
     fields.forEach(field => {
       if (req.body[field] !== undefined) {
         db.run(
@@ -88,23 +118,25 @@ module.exports = (db) => {
       }
     });
 
-    // Şəkilləri yüklə (əgər varsa)
     if (req.files && req.files.hero_portrait && req.files.hero_portrait[0]) {
-      const portrait = '/uploads/' + req.files.hero_portrait[0].filename;
-      db.run(
-        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
-        ['hero_portrait', portrait]
-      );
+      const portraitUrl = await uploadToSupabase(req.files.hero_portrait[0]);
+      if (portraitUrl) {
+        db.run(
+          'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+          ['hero_portrait', portraitUrl]
+        );
+      }
     }
     if (req.files && req.files.hero_background && req.files.hero_background[0]) {
-      const bg = '/uploads/' + req.files.hero_background[0].filename;
-      db.run(
-        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
-        ['hero_background', bg]
-      );
+      const bgUrl = await uploadToSupabase(req.files.hero_background[0]);
+      if (bgUrl) {
+        db.run(
+          'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+          ['hero_background', bgUrl]
+        );
+      }
     }
 
-    // Şəkilləri sil
     if (req.body.remove_portrait === '1') {
       db.run(
         'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
@@ -118,12 +150,10 @@ module.exports = (db) => {
       );
     }
 
-    setTimeout(() => res.redirect('/admin/settings?saved=1'), 300);
+    setTimeout(() => res.redirect('/admin/settings?saved=1'), 500);
   });
 
-  // ============================================
   // ---------- YAZILAR ----------
-  // ============================================
   router.get('/posts', requireAuth, (req, res) => {
     db.all('SELECT * FROM posts ORDER BY created_at DESC', (err, posts) => {
       if (err) posts = [];
@@ -135,10 +165,10 @@ module.exports = (db) => {
     res.render('admin/post-form', { post: null });
   });
 
-  router.post('/posts/new', requireAuth, upload.fields([{ name: 'image' }, { name: 'video' }]), (req, res) => {
+  router.post('/posts/new', requireAuth, upload.fields([{ name: 'image' }, { name: 'video' }]), async (req, res) => {
     const { title, category, content } = req.body;
-    const image = req.files && req.files.image ? '/uploads/' + req.files.image[0].filename : null;
-    const video = req.files && req.files.video ? '/uploads/' + req.files.video[0].filename : null;
+    const image = req.files && req.files.image ? await uploadToSupabase(req.files.image[0]) : null;
+    const video = req.files && req.files.video ? await uploadToSupabase(req.files.video[0]) : null;
     db.run('INSERT INTO posts (title, category, content, image, video) VALUES (?, ?, ?, ?, ?)',
       [title, category, content, image, video], () => res.redirect('/admin/posts'));
   });
@@ -149,11 +179,11 @@ module.exports = (db) => {
     });
   });
 
-  router.post('/posts/edit/:id', requireAuth, upload.fields([{ name: 'image' }, { name: 'video' }]), (req, res) => {
+  router.post('/posts/edit/:id', requireAuth, upload.fields([{ name: 'image' }, { name: 'video' }]), async (req, res) => {
     const { title, category, content } = req.body;
-    db.get('SELECT * FROM posts WHERE id = ?', [req.params.id], (err, old) => {
-      const image = req.files && req.files.image ? '/uploads/' + req.files.image[0].filename : old.image;
-      const video = req.files && req.files.video ? '/uploads/' + req.files.video[0].filename : old.video;
+    db.get('SELECT * FROM posts WHERE id = ?', [req.params.id], async (err, old) => {
+      const image = req.files && req.files.image ? await uploadToSupabase(req.files.image[0]) : old.image;
+      const video = req.files && req.files.video ? await uploadToSupabase(req.files.video[0]) : old.video;
       db.run('UPDATE posts SET title=?, category=?, content=?, image=?, video=? WHERE id=?',
         [title, category, content, image, video, req.params.id],
         () => res.redirect('/admin/posts'));
@@ -164,9 +194,7 @@ module.exports = (db) => {
     db.run('DELETE FROM posts WHERE id = ?', [req.params.id], () => res.redirect('/admin/posts'));
   });
 
-  // ============================================
   // ---------- KİTABLAR ----------
-  // ============================================
   router.get('/books', requireAuth, (req, res) => {
     db.all('SELECT * FROM books ORDER BY created_at DESC', (err, books) => {
       if (err) books = [];
@@ -178,9 +206,9 @@ module.exports = (db) => {
     res.render('admin/book-form', { book: null });
   });
 
-  router.post('/books/new', requireAuth, upload.single('cover'), (req, res) => {
+  router.post('/books/new', requireAuth, upload.single('cover'), async (req, res) => {
     const { title, year, publisher, isbn, description, sample_text, reviews, video_link, gallery, buy_link } = req.body;
-    const cover = req.file ? '/uploads/' + req.file.filename : null;
+    const cover = req.file ? await uploadToSupabase(req.file) : null;
     db.run('INSERT INTO books (title, cover, year, publisher, isbn, description, sample_text, reviews, video_link, gallery, buy_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [title, cover, year, publisher, isbn, description, sample_text, reviews, video_link, gallery, buy_link],
       () => res.redirect('/admin/books'));
@@ -192,10 +220,10 @@ module.exports = (db) => {
     });
   });
 
-  router.post('/books/edit/:id', requireAuth, upload.single('cover'), (req, res) => {
+  router.post('/books/edit/:id', requireAuth, upload.single('cover'), async (req, res) => {
     const { title, year, publisher, isbn, description, sample_text, reviews, video_link, gallery, buy_link } = req.body;
-    db.get('SELECT * FROM books WHERE id = ?', [req.params.id], (err, old) => {
-      const cover = req.file ? '/uploads/' + req.file.filename : old.cover;
+    db.get('SELECT * FROM books WHERE id = ?', [req.params.id], async (err, old) => {
+      const cover = req.file ? await uploadToSupabase(req.file) : old.cover;
       db.run('UPDATE books SET title=?, cover=?, year=?, publisher=?, isbn=?, description=?, sample_text=?, reviews=?, video_link=?, gallery=?, buy_link=? WHERE id=?',
         [title, cover, year, publisher, isbn, description, sample_text, reviews, video_link, gallery, buy_link, req.params.id],
         () => res.redirect('/admin/books'));
@@ -206,9 +234,7 @@ module.exports = (db) => {
     db.run('DELETE FROM books WHERE id = ?', [req.params.id], () => res.redirect('/admin/books'));
   });
 
-  // ============================================
   // ---------- ŞƏRHLƏR ----------
-  // ============================================
   router.get('/comments', requireAuth, (req, res) => {
     db.all('SELECT comments.*, posts.title as post_title FROM comments JOIN posts ON posts.id = comments.post_id ORDER BY comments.created_at DESC', (err, comments) => {
       if (err) comments = [];
@@ -224,9 +250,7 @@ module.exports = (db) => {
     db.run('DELETE FROM comments WHERE id = ?', [req.params.id], () => res.redirect('/admin/comments'));
   });
 
-  // ============================================
   // ---------- ŞİFRƏ DƏYİŞMƏ ----------
-  // ============================================
   router.get('/password', requireAuth, (req, res) => {
     res.render('admin/password', { error: null, success: null });
   });
