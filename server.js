@@ -15,17 +15,12 @@ const pool = new Pool({
 });
 
 // ---------- AĞILLI WRAPPER (SQLite → PostgreSQL) ----------
-// Bu wrapper köhnə SQLite sintaksisini PostgreSQL-ə çevirir
-// Beləliklə, routes/ fayllarına toxunmaq lazım deyil!
-
 function convertSql(sql) {
-  // "?" → "$1, $2, $3" çevir
   let counter = 1;
   return sql.replace(/\?/g, () => `$${counter++}`);
 }
 
 const db = {
-  // db.get() — 1 sətir qaytarır
   get: (sql, params, callback) => {
     if (typeof params === 'function') {
       callback = params;
@@ -37,7 +32,6 @@ const db = {
       .catch(err => callback(err));
   },
   
-  // db.all() — bütün sətirləri qaytarır
   all: (sql, params, callback) => {
     if (typeof params === 'function') {
       callback = params;
@@ -49,7 +43,6 @@ const db = {
       .catch(err => callback(err));
   },
   
-  // db.run() — INSERT/UPDATE/DELETE üçün
   run: (sql, params, callback) => {
     if (typeof params === 'function') {
       callback = params;
@@ -66,7 +59,6 @@ const db = {
       });
   },
   
-  // db.serialize() — SQLite üçün idi, indi heç nə etmir
   serialize: (callback) => {
     if (callback) callback();
   }
@@ -75,7 +67,6 @@ const db = {
 // ---------- VERİLƏNLƏR BAZASI SXEMİ ----------
 async function initDatabase() {
   try {
-    // USERS cədvəli
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -84,7 +75,6 @@ async function initDatabase() {
       )
     `);
 
-    // POSTS cədvəli
     await pool.query(`
       CREATE TABLE IF NOT EXISTS posts (
         id SERIAL PRIMARY KEY,
@@ -99,7 +89,6 @@ async function initDatabase() {
       )
     `);
 
-    // BOOKS cədvəli
     await pool.query(`
       CREATE TABLE IF NOT EXISTS books (
         id SERIAL PRIMARY KEY,
@@ -118,7 +107,6 @@ async function initDatabase() {
       )
     `);
 
-    // COMMENTS cədvəli
     await pool.query(`
       CREATE TABLE IF NOT EXISTS comments (
         id SERIAL PRIMARY KEY,
@@ -130,7 +118,6 @@ async function initDatabase() {
       )
     `);
 
-    // SETTINGS cədvəli
     await pool.query(`
       CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
@@ -138,7 +125,6 @@ async function initDatabase() {
       )
     `);
 
-    // Default settings
     const defaultSettings = [
       ['site_name', 'Ülkər Nicatlı'],
       ['hero_title', 'Sözün, duyğunun və düşüncənin ünvanı'],
@@ -163,7 +149,6 @@ async function initDatabase() {
       );
     }
 
-    // Default admin
     const hash = bcrypt.hashSync('admin123', 10);
     await pool.query(
       `INSERT INTO users (id, username, password) VALUES (1, 'admin', $1)
@@ -185,12 +170,11 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 app.use(session({
-  secret: 'ulker-nicatli-secret-key-2025',
+  secret: process.env.SESSION_SECRET || 'ulker-nicatli-secret-key-2025',
   resave: false,
   saveUninitialized: false
 }));
 
-// DB-ni hər request-də əlçatan et + settings yüklə
 app.use((req, res, next) => {
   req.db = db;
   res.locals.user = req.session.user || null;
@@ -219,6 +203,7 @@ initDatabase().then(() => {
     console.log('🔐 Admin: http://localhost:' + PORT + '/admin/login');
     console.log('👤 İstifadəçi: admin / admin123');
     console.log('📊 Database: PostgreSQL (Supabase)');
+    console.log('☁️  Storage: Supabase Storage');
     console.log('=================================');
   });
 });
